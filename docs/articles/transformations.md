@@ -1,0 +1,369 @@
+# Image Transformations
+
+``` r
+
+library(ggbasemap)
+library(ggplot2)
+library(sf)
+#> Linking to GEOS 3.13.1, GDAL 3.11.4, PROJ 9.7.0; sf_use_s2() is TRUE
+
+# Load sample data
+nc <- st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+```
+
+## Introduction
+
+**ggbasemap** provides powerful image transformation capabilities that
+allow you to style your basemaps to match your visualization needs. You
+can adjust grayscale, saturation, brightness, contrast, and gamma
+correction.
+
+## Available Transformations
+
+### 1. Grayscale (Black & White)
+
+Convert your basemap to black and white for a classic look:
+
+``` r
+
+ggplot() +
+  add_basemap(nc, grayscale = TRUE) +
+  geom_sf(data = nc, fill = NA, color = "white", linewidth = 1) +
+  theme_void()
+```
+
+This is perfect for: - Academic publications - Print media - When you
+want data to stand out - Creating vintage-style maps
+
+### 2. Saturation
+
+Control the intensity of colors:
+
+``` r
+
+# No saturation (black & white)
+ggplot() +
+  add_basemap(nc, saturation = 0) +
+  geom_sf(data = nc, fill = NA, color = "red") +
+  ggtitle("Saturation = 0")
+
+# Reduced saturation (50%)
+ggplot() +
+  add_basemap(nc, saturation = 0.5) +
+  geom_sf(data = nc, fill = NA, color = "red") +
+  ggtitle("Saturation = 0.5")
+
+# Normal saturation
+ggplot() +
+  add_basemap(nc, saturation = 1) +
+  geom_sf(data = nc, fill = NA, color = "red") +
+  ggtitle("Saturation = 1 (default)")
+
+# Increased saturation (150%)
+ggplot() +
+  add_basemap(nc, saturation = 1.5) +
+  geom_sf(data = nc, fill = NA, color = "red") +
+  ggtitle("Saturation = 1.5")
+```
+
+**Use cases:** - `saturation = 0`: Documents, printing -
+`saturation = 0.3-0.7`: Subtle, professional look - `saturation = 1`:
+Normal (default) - `saturation = 1.2-2`: Vibrant, eye-catching maps
+
+### 3. Brightness
+
+Adjust the overall lightness:
+
+``` r
+
+# Darker (-30%)
+ggplot() +
+  add_basemap(nc, brightness = 0.7) +
+  geom_sf(data = nc, fill = NA, color = "yellow") +
+  ggtitle("Brightness = 0.7 (darker)")
+
+# Normal
+ggplot() +
+  add_basemap(nc, brightness = 1) +
+  geom_sf(data = nc, fill = NA, color = "red") +
+  ggtitle("Brightness = 1 (default)")
+
+# Brighter (+30%)
+ggplot() +
+  add_basemap(nc, brightness = 1.3) +
+  geom_sf(data = nc, fill = NA, color = "darkblue") +
+  ggtitle("Brightness = 1.3 (brighter)")
+```
+
+**Tips:** - Use `brightness < 1` with light-colored data - Use
+`brightness > 1` with dark-colored data - Combine with `contrast` for
+best results
+
+### 4. Contrast
+
+Enhance or reduce the difference between light and dark areas:
+
+``` r
+
+# Low contrast (flat)
+ggplot() +
+  add_basemap(nc, contrast = 0.6) +
+  geom_sf(data = nc, fill = NA, color = "red") +
+  ggtitle("Contrast = 0.6 (flat)")
+
+# Normal
+ggplot() +
+  add_basemap(nc, contrast = 1) +
+  geom_sf(data = nc, fill = NA, color = "red") +
+  ggtitle("Contrast = 1 (default)")
+
+# High contrast (punchy)
+ggplot() +
+  add_basemap(nc, contrast = 1.5) +
+  geom_sf(data = nc, fill = NA, color = "red") +
+  ggtitle("Contrast = 1.5 (punchy)")
+```
+
+**When to use:** - `contrast < 1`: Soft, dreamy aesthetics -
+`contrast > 1`: Sharp, dramatic effect - `contrast = 1.2-1.4`: Good for
+satellite imagery
+
+### 5. Gamma Correction
+
+Adjust midtones without affecting blacks and whites:
+
+``` r
+
+# Gamma < 1: brighter midtones (good for dark imagery)
+ggplot() +
+  add_basemap(nc, gamma = 0.8) +
+  geom_sf(data = nc, fill = NA, color = "red") +
+  ggtitle("Gamma = 0.8 (brighter midtones)")
+
+# Gamma = 1: no change
+ggplot() +
+  add_basemap(nc, gamma = 1) +
+  geom_sf(data = nc, fill = NA, color = "red") +
+  ggtitle("Gamma = 1 (default)")
+
+# Gamma > 1: darker midtones (good for washed-out imagery)
+ggplot() +
+  add_basemap(nc, gamma = 1.2) +
+  geom_sf(data = nc, fill = NA, color = "red") +
+  ggtitle("Gamma = 1.2 (darker midtones)")
+```
+
+**Technical note:** Gamma correction is non-linear and applied first,
+before brightness and contrast.
+
+## Combining Transformations
+
+The real power comes from combining multiple transformations:
+
+### Vintage/Sepia Effect
+
+``` r
+
+ggplot() +
+  add_basemap(nc,
+              saturation = 0.3,      # Desaturate
+              brightness = 0.85,     # Slightly darker
+              contrast = 1.2,        # More contrast
+              gamma = 1.1) +         # Darker midtones
+  geom_sf(data = nc, fill = NA, color = "brown", linewidth = 0.8) +
+  theme_void() +
+  ggtitle("Vintage Style")
+```
+
+### High-Contrast Monochrome
+
+``` r
+
+ggplot() +
+  add_basemap(nc,
+              grayscale = TRUE,      # Black & white
+              brightness = 1.1,      # Brighter
+              contrast = 1.6) +      # Very contrasty
+  geom_sf(data = nc, fill = NA, color = "black") +
+  theme_void() +
+  ggtitle("High-Contrast Monochrome")
+```
+
+### Soft/Faded Look
+
+``` r
+
+ggplot() +
+  add_basemap(nc,
+              saturation = 0.6,      # Muted colors
+              brightness = 1.1,      # Brighter
+              contrast = 0.8,        # Less contrast
+              gamma = 0.9) +         # Brighter midtones
+  geom_sf(data = nc, fill = NA, color = "darkblue") +
+  theme_void() +
+  ggtitle("Soft/Faded Look")
+```
+
+### Night Mode
+
+``` r
+
+ggplot() +
+  add_basemap(nc,
+              saturation = 0.7,
+              brightness = 0.6,      # Much darker
+              contrast = 1.3,
+              gamma = 1.2) +
+  geom_sf(data = nc, fill = NA, color = "cyan") +
+  theme_void() +
+  ggtitle("Night Mode")
+```
+
+### Data-Friendly Background
+
+When you want your data to be the star:
+
+``` r
+
+ggplot() +
+  add_basemap(nc,
+              saturation = 0.2,      # Almost grayscale
+              brightness = 1.05,
+              contrast = 0.9) +
+  geom_sf(data = nc, 
+          aes(fill = area),          # Your data stands out
+          color = "white",
+          linewidth = 0.3) +
+  scale_fill_viridis_c() +
+  theme_void() +
+  ggtitle("Data-Friendly Background")
+```
+
+## Complete Reference Table
+
+| Parameter    | Default | Range      | Effect                        |
+|--------------|---------|------------|-------------------------------|
+| `grayscale`  | FALSE   | TRUE/FALSE | Convert to B&W                |
+| `saturation` | 1       | 0 to Inf   | Color intensity (0=grayscale) |
+| `brightness` | 1       | 0 to Inf   | Overall lightness             |
+| `contrast`   | 1       | 0 to Inf   | Difference between light/dark |
+| `gamma`      | 1       | 0 to Inf   | Midtones adjustment           |
+
+## Transformation Order
+
+Transformations are applied in this order:
+
+1.  **Gamma** (non-linear correction)
+2.  **Brightness** (linear multiplication)
+3.  **Contrast** (centered on 0.5)
+4.  **Saturation** (color adjustment)
+5.  **Grayscale** (final conversion if TRUE)
+
+This order ensures the best visual results.
+
+## Best Practices
+
+### For Print Publications
+
+``` r
+
+ggplot() +
+  add_basemap(data,
+              grayscale = TRUE,      # Always use B&W for print
+              contrast = 1.2,        # Boost contrast for printing
+              brightness = 0.95) +   # Slightly darker for better ink coverage
+  geom_sf(data = data)
+```
+
+### For Web/Digital Display
+
+``` r
+
+ggplot() +
+  add_basemap(data,
+              saturation = 1.1,      # Slightly more vibrant
+              brightness = 1.05,     # Brighter for screens
+              contrast = 1.0) +      # Normal contrast
+  geom_sf(data = data)
+```
+
+### For Satellite Imagery
+
+``` r
+
+ggplot() +
+  add_basemap(data,
+              url = "...satellite...",
+              contrast = 1.3,        # Enhance details
+              gamma = 0.9,           # Brighten shadows
+              saturation = 1.2) +    # Vivid colors
+  geom_sf(data = data)
+```
+
+### For Road Maps
+
+``` r
+
+ggplot() +
+  add_basemap(data,
+              saturation = 0.4,      # Muted
+              brightness = 1.1,      # Light background
+              contrast = 0.9) +      # Softer
+  geom_sf(data = data)
+```
+
+## Common Mistakes to Avoid
+
+1.  **Don’t overdo it**: Extreme values (\>2 or \<0.3) usually look bad
+2.  **Check your data**: Make sure your data colors work with the
+    basemap
+3.  **Test on different screens**: What looks good on your monitor might
+    not on others
+4.  **Save with care**: Transformations affect file size and quality
+
+## Examples Gallery
+
+### Example 1: Minimalist
+
+``` r
+
+ggplot() +
+  add_basemap(nc, grayscale = TRUE, brightness = 1.1) +
+  geom_sf(data = nc, fill = NA, color = "black") +
+  theme_void()
+```
+
+### Example 2: Vibrant
+
+``` r
+
+ggplot() +
+  add_basemap(nc, saturation = 1.4, contrast = 1.2) +
+  geom_sf(data = nc, aes(fill = area), color = "white") +
+  scale_fill_viridis_c(option = "plasma")
+```
+
+### Example 3: Document-Ready
+
+``` r
+
+ggplot() +
+  add_basemap(nc, 
+              grayscale = TRUE, 
+              contrast = 1.3,
+              brightness = 0.9) +
+  geom_sf(data = nc, fill = "lightgray", color = "black") +
+  theme_bw()
+```
+
+## Next Steps
+
+- Learn about **[Map
+  Rotation](https://cedricbouffard.github.io/ggbasemap/articles/rotation.md)**
+  for angled perspectives
+- Explore **[Advanced
+  Usage](https://cedricbouffard.github.io/ggbasemap/articles/advanced-usage.md)**
+  for power users
+- Check the
+  **[FAQ](https://cedricbouffard.github.io/ggbasemap/articles/faq.md)**
+  for common questions
