@@ -13,6 +13,7 @@ add_basemap(
   url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   zoom = NULL,
   alpha = 1,
+  hires = FALSE,
   interpolate = TRUE,
   padding = 0.1,
   grayscale = FALSE,
@@ -39,6 +40,8 @@ add_basemap(
 \item{zoom}{Zoom level (optional, auto-calculated if not provided)}
 
 \item{alpha}{Transparency of the basemap (0-1)}
+
+\item{hires}{Download high resolution tiles by increasing zoom level (default FALSE). When TRUE, adds +2 to zoom level for sharper images.}
 
 \item{interpolate}{Whether to interpolate the raster image}
 

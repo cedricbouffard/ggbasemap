@@ -12,6 +12,7 @@
 #' @param url XYZ tile URL template with {x}, {y}, {z} placeholders
 #' @param zoom Zoom level (optional, auto-calculated if not provided)
 #' @param alpha Transparency of the basemap (0-1)
+#' @param hires Download high resolution tiles by increasing zoom level (default FALSE). When TRUE, adds +2 to zoom level for sharper images.
 #' @param interpolate Whether to interpolate the raster image
 #' @param padding Fraction of range to add as padding around the data (default 0.1)
 #' @param grayscale Convert image to grayscale (default FALSE)
@@ -67,6 +68,7 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
                          url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                          zoom = NULL,
                          alpha = 1,
+                         hires = FALSE,
                          interpolate = TRUE,
                          padding = 0.1,
                          grayscale = FALSE,
@@ -113,6 +115,12 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
   # Add 1 to auto-calculated zoom for sharper images
   if (is.null(zoom)) {
     zoom <- calculate_zoom(bbox_vec) + 1
+  }
+  
+  # Increase zoom for high resolution
+  if (hires) {
+    zoom <- zoom + 2
+    if (verbose) message("High resolution mode: zoom increased to ", zoom)
   }
   
   # Fetch and create raster
