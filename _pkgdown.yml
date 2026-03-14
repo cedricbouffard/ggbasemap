@@ -1,0 +1,70 @@
+url: https://cedricbouffard.github.io/ggbasemap
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search, github]
+  components:
+    intro:
+      text: Get Started
+      href: articles/introduction.html
+    articles:
+      text: Articles
+      menu:
+      - text: Introduction
+        href: articles/introduction.html
+      - text: Map Rotation
+        href: articles/rotation.html
+      - text: Image Transformations
+        href: articles/transformations.html
+    news:
+      text: News
+      href: news/index.html
+
+reference:
+  - title: Main Functions
+    desc: Core functions for adding basemaps
+    contents:
+      - add_basemap
+      - coord_rotate
+  
+  - title: Utilities
+    desc: Helper functions
+    contents:
+      - rot
+  
+  - title: Internal Functions
+    desc: Functions used internally
+    contents:
+      - starts_with("calculate_")
+      - starts_with("latlon_to_")
+      - starts_with("tile_to_")
+      - starts_with("extract_")
+      - starts_with("fetch_")
+      - starts_with("create_")
+      - starts_with("apply_")
+      - ends_with("_to_mercator")
+
+articles:
+  - title: Getting Started
+    navbar: ~
+    contents:
+      - introduction
+      - rotation
+      - transformations
+
+home:
+  links:
+  - text: Learn more
+    href: https://github.com/cedricbouffard/ggbasemap
+  - text: Report a bug
+    href: https://github.com/cedricbouffard/ggbasemap/issues
+  
+footer:
+  structure: 
+    left: developed_by
+    right: built_with
