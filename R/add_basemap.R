@@ -162,18 +162,32 @@ extract_bbox_from_sf <- function(data, padding) {
   # Get initial bbox
   bbox <- sf::st_bbox(data)
   
-  # Check if values are in meters (projected CRS) instead of degrees
-  # Valid degrees: -180 to 180 for longitude, -90 to 90 for latitude
+  # Debug output
   bbox_values <- as.numeric(c(bbox["xmin"], bbox["xmax"], bbox["ymin"], bbox["ymax"]))
+  
+  # Check for NaN/Inf values
+  if (any(!is.finite(bbox_values))) {
+    stop(sprintf("Invalid bbox values detected: xmin=%s, xmax=%s, ymin=%s, ymax=%s. Check input data geometry.",
+                 bbox["xmin"], bbox["xmax"], bbox["ymin"], bbox["ymax"]))
+  }
+  
   max_abs_value <- max(abs(bbox_values), na.rm = TRUE)
   
   # If any coordinate > 180, it's likely in meters (projected CRS)
   if (max_abs_value > 180) {
-    if (max_abs_value > 1000) {
-      message("Converting data from projected CRS (likely meters) to WGS84 (EPSG:4326)...")
+    message(sprintf("Converting data from projected CRS (max abs value: %.2f) to WGS84 (EPSG:4326)...", max_abs_value))
+    
+    # Check if transformation is possible
+    data_crs <- sf::st_crs(data)
+    if (is.na(data_crs)) {
+      stop("Data has no CRS and cannot be converted to WGS84. Please assign a CRS first using st_crs(data) <- EPSG_code")
     }
+    
     data <- sf::st_transform(data, 4326)
     bbox <- sf::st_bbox(data)
+    
+    message(sprintf("After transformation: xmin=%.4f, xmax=%.4f, ymin=%.4f, ymax=%.4f",
+                    bbox["xmin"], bbox["xmax"], bbox["ymin"], bbox["ymax"]))
   }
   
   # Validate bbox values are now in valid range
@@ -182,7 +196,8 @@ extract_bbox_from_sf <- function(data, padding) {
     stop("Invalid bbox values after transformation. Check input data CRS.")
   }
   if (max(abs(bbox_values)) > 180) {
-    stop("Cannot convert data to WGS84. Please provide data in EPSG:4326 or a recognized projected CRS.")
+    stop(sprintf("Cannot convert data to WGS84. Max abs value is %.2f. Please provide data in EPSG:4326 or a recognized projected CRS.", 
+                 max(abs(bbox_values))))
   }
   
   # st_bbox returns a named vector
