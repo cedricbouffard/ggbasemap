@@ -4,12 +4,15 @@
 \alias{coord_rotate}
 \title{Create Coordinate System with Rotation}
 \usage{
-coord_rotate(x, angle)
+coord_rotate(x, angle, ratio = NULL)
 }
 \arguments{
 \item{x}{sf object to base the extent on}
 
 \item{angle}{Rotation angle in degrees}
+
+\item{ratio}{Aspect ratio (width/height) for the output bbox. Default NULL uses natural ratio.
+Common values: 16/9 for widescreen, 4/3 for standard, 1 for square.}
 }
 \value{
 List with coord (coord_sf), bbox (expanded bbox in WGS84), and crs

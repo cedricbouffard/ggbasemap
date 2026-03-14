@@ -15,9 +15,11 @@ rot <- function(a) {
 #' Also returns the expanded bbox needed to cover the rotated area.
 #' @param x sf object to base the extent on
 #' @param angle Rotation angle in degrees
+#' @param ratio Aspect ratio (width/height) for the output bbox. Default NULL uses natural ratio.
+#'   Common values: 16/9 for widescreen, 4/3 for standard, 1 for square.
 #' @return List with coord (coord_sf), bbox (expanded bbox in WGS84), and crs
 #' @export
-coord_rotate <- function(x, angle) {
+coord_rotate <- function(x, angle, ratio = NULL) {
   # Temporarily disable S2 to avoid geometry errors
   old_s2 <- sf::sf_use_s2(FALSE)
   on.exit(sf::sf_use_s2(old_s2))
@@ -71,6 +73,28 @@ coord_rotate <- function(x, angle) {
     ymax = max(rotated_points[, 2])
   )
   
+  # If ratio is specified, adjust the bbox to fit that aspect ratio
+  if (!is.null(ratio)) {
+    bbox_width <- expanded_bbox["xmax"] - expanded_bbox["xmin"]
+    bbox_height <- expanded_bbox["ymax"] - expanded_bbox["ymin"]
+    current_ratio <- bbox_width / bbox_height
+    
+    centroid_x <- (expanded_bbox["xmin"] + expanded_bbox["xmax"]) / 2
+    centroid_y <- (expanded_bbox["ymin"] + expanded_bbox["ymax"]) / 2
+    
+    if (current_ratio < ratio) {
+      # Need to increase width
+      new_width <- bbox_height * ratio
+      expanded_bbox["xmin"] <- centroid_x - new_width / 2
+      expanded_bbox["xmax"] <- centroid_x + new_width / 2
+    } else {
+      # Need to increase height
+      new_height <- bbox_width / ratio
+      expanded_bbox["ymin"] <- centroid_y - new_height / 2
+      expanded_bbox["ymax"] <- centroid_y + new_height / 2
+    }
+  }
+  
   # Transform x to get extent in rotated CRS
   x_rotated <- sf::st_transform(x, crs = crs_string)
   coords <- sf::st_coordinates(x_rotated)
@@ -81,6 +105,26 @@ coord_rotate <- function(x, angle) {
   x_pad <- diff(x_range) * 0.05
   y_pad <- diff(y_range) * 0.05
   
+  # If ratio specified, also adjust the coord limits
+  if (!is.null(ratio)) {
+    coord_width <- diff(x_range)
+    coord_height <- diff(y_range)
+    coord_current_ratio <- coord_width / coord_height
+    
+    coord_centroid_x <- mean(x_range)
+    coord_centroid_y <- mean(y_range)
+    
+    if (coord_current_ratio < ratio) {
+      # Need to increase width
+      new_width <- coord_height * ratio
+      x_range <- c(coord_centroid_x - new_width / 2, coord_centroid_x + new_width / 2)
+    } else {
+      # Need to increase height
+      new_height <- coord_width / ratio
+      y_range <- c(coord_centroid_y - new_height / 2, coord_centroid_y + new_height / 2)
+    }
+  }
+  
   sf::sf_use_s2(old_s2)
   
   list(
@@ -89,6 +133,7 @@ coord_rotate <- function(x, angle) {
                               crs = crs_string, expand = FALSE),
     bbox = expanded_bbox,
     crs = crs_string,
-    angle = angle
+    angle = angle,
+    ratio = ratio
   )
 }
