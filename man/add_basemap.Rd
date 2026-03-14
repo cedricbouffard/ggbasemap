@@ -99,5 +99,10 @@ bbox <- c(xmin = -74.1, ymin = 40.6, xmax = -73.8, ymax = 40.9)
 ggplot() +
   add_basemap(bbox = bbox) +
   geom_point(data = df, aes(x = lon, y = lat), color = "red", size = 3)
+
+# Method 5: Adjust zoom level for sharper images
+ggplot() +
+  add_basemap(nc, zoom_offset = 2) +  # Higher resolution
+  geom_sf(data = nc, fill = NA, color = "red")
 }
 }

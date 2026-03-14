@@ -63,6 +63,11 @@
 #' ggplot() +
 #'   add_basemap(bbox = bbox) +
 #'   geom_point(data = df, aes(x = lon, y = lat), color = "red", size = 3)
+#'
+#' # Method 5: Adjust zoom level for sharper images
+#' ggplot() +
+#'   add_basemap(nc, zoom_offset = 2) +  # Higher resolution
+#'   geom_sf(data = nc, fill = NA, color = "red")
 #' }
 add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326,
                          url = "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
