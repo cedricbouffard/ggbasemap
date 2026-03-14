@@ -159,33 +159,31 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
 #' @return Named vector with xmin, ymin, xmax, ymax
 #' @noRd
 extract_bbox_from_sf <- function(data, padding) {
-  # Check CRS and transform to WGS84 if needed
-  data_crs <- sf::st_crs(data)
+  # Get initial bbox
+  bbox <- sf::st_bbox(data)
   
-  if (is.na(data_crs)) {
-    warning("Data has no CRS, assuming WGS84 (EPSG:4326)")
-    sf::st_crs(data) <- 4326
-  } else {
-    # Check if it's already WGS84 (handle both EPSG:4326 and OGC:CRS84)
-    crs_epsg <- data_crs$epsg
-    crs_wkt <- data_crs$wkt
-    
-    is_wgs84 <- FALSE
-    if (!is.null(crs_epsg) && !is.na(crs_epsg) && crs_epsg == 4326) {
-      is_wgs84 <- TRUE
-    } else if (!is.null(crs_wkt) && grepl("WGS 84|WGS84|EPSG.*4326", crs_wkt, ignore.case = TRUE)) {
-      is_wgs84 <- TRUE
+  # Check if values are in meters (projected CRS) instead of degrees
+  # Valid degrees: -180 to 180 for longitude, -90 to 90 for latitude
+  bbox_values <- as.numeric(c(bbox["xmin"], bbox["xmax"], bbox["ymin"], bbox["ymax"]))
+  max_abs_value <- max(abs(bbox_values), na.rm = TRUE)
+  
+  # If any coordinate > 180, it's likely in meters (projected CRS)
+  if (max_abs_value > 180) {
+    if (max_abs_value > 1000) {
+      message("Converting data from projected CRS (likely meters) to WGS84 (EPSG:4326)...")
     }
-    
-    if (!is_wgs84) {
-      if (any(grepl("metre|meter|m", sf::st_crs(data, parameters = TRUE)$units_gdal, ignore.case = TRUE))) {
-        message("Converting data from projected CRS to WGS84 (EPSG:4326) for tile calculation...")
-      }
-      data <- sf::st_transform(data, 4326)
-    }
+    data <- sf::st_transform(data, 4326)
+    bbox <- sf::st_bbox(data)
   }
   
-  bbox <- sf::st_bbox(data)
+  # Validate bbox values are now in valid range
+  bbox_values <- as.numeric(c(bbox["xmin"], bbox["xmax"], bbox["ymin"], bbox["ymax"]))
+  if (any(!is.finite(bbox_values))) {
+    stop("Invalid bbox values after transformation. Check input data CRS.")
+  }
+  if (max(abs(bbox_values)) > 180) {
+    stop("Cannot convert data to WGS84. Please provide data in EPSG:4326 or a recognized projected CRS.")
+  }
   
   # st_bbox returns a named vector
   x_range <- c(as.numeric(bbox["xmin"]), as.numeric(bbox["xmax"]))
