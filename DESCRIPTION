@@ -1,0 +1,30 @@
+Package: ggbasemap
+Type: Package
+Title: Add Basemap Tiles to ggplot2
+Version: 0.1.0
+Authors@R: 
+    person("Your", "Name", email = "your.email@example.com", role = c("aut", "cre"))
+Description: Provides a function to add basemap tiles from XYZ tile servers
+    to ggplot2 plots. Automatically detects bounding boxes and calculates
+    appropriate zoom levels.
+License: MIT + file LICENSE
+URL: https://cedricbouffard.github.io/ggbasemap
+BugReports: https://github.com/cedricbouffard/ggbasemap/issues
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.3
+Imports:
+    ggplot2,
+    httr,
+    png,
+    jpeg,
+    rlang,
+    ggspatial,
+    sf,
+    terra
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+Config/testthat/edition: 3
