@@ -7,7 +7,7 @@
 #' @param data A data frame or sf object containing the spatial data (optional if bbox is provided)
 #' @param x The name of the longitude column. Can be unquoted (bare name) or quoted (character string). Optional if data is sf object or bbox is provided.
 #' @param y The name of the latitude column. Can be unquoted (bare name) or quoted (character string). Optional if data is sf object or bbox is provided.
-#' @param bbox Bounding box as c(xmin, ymin, xmax, ymax) or sf bbox object. Optional if data is provided.
+#' @param bbox Bounding box as c(xmin, ymin, xmax, ymax) or sf bbox object in WGS84 (EPSG:4326). Optional if data is provided.
 #' @param crs Coordinate reference system (default: 4326 for WGS84). Can be an EPSG code or crs object.
 #' @param url XYZ tile URL template with {x}, {y}, {z} placeholders
 #' @param zoom Zoom level (optional, auto-calculated if not provided)
@@ -82,7 +82,13 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
   if (!is.null(bbox)) {
     # Use provided bbox
     if (inherits(bbox, "bbox")) {
-      # sf bbox object
+      # sf bbox object - check if it has a CRS attribute
+      if (!is.null(attr(bbox, "crs"))) {
+        bbox_crs <- sf::st_crs(attr(bbox, "crs"))
+        if (!is.na(bbox_crs) && bbox_crs$epsg != 4326) {
+          stop("bbox must be in WGS84 (EPSG:4326). Use sf::st_bbox(st_transform(your_data, 4326))")
+        }
+      }
       bbox_vec <- c(xmin = bbox["xmin"], ymin = bbox["ymin"], 
                     xmax = bbox["xmax"], ymax = bbox["ymax"])
     } else {
@@ -92,6 +98,10 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
         stop("bbox must be a vector of length 4: c(xmin, ymin, xmax, ymax)")
       }
       names(bbox_vec) <- c("xmin", "ymin", "xmax", "ymax")
+      # Check if values look like meters instead of degrees
+      if (any(abs(bbox_vec) > 180)) {
+        stop("bbox values appear to be in meters (projected CRS). Please provide bbox in WGS84 degrees (EPSG:4326) or use data parameter with sf object.")
+      }
     }
   } else if (!is.null(data)) {
     # Extract bbox from data
@@ -149,6 +159,17 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
 #' @return Named vector with xmin, ymin, xmax, ymax
 #' @noRd
 extract_bbox_from_sf <- function(data, padding) {
+  # Check CRS and transform to WGS84 if needed
+  data_crs <- sf::st_crs(data)
+  if (is.na(data_crs) || data_crs$epsg != 4326) {
+    if (!is.na(data_crs)) {
+      data <- sf::st_transform(data, 4326)
+    } else {
+      warning("Data has no CRS, assuming WGS84 (EPSG:4326)")
+      sf::st_crs(data) <- 4326
+    }
+  }
+  
   bbox <- sf::st_bbox(data)
   
   # st_bbox returns a named vector

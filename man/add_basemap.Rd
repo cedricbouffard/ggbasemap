@@ -31,7 +31,7 @@ add_basemap(
 
 \item{y}{The name of the latitude column. Can be unquoted (bare name) or quoted (character string). Optional if data is sf object or bbox is provided.}
 
-\item{bbox}{Bounding box as c(xmin, ymin, xmax, ymax) or sf bbox object. Optional if data is provided.}
+\item{bbox}{Bounding box as c(xmin, ymin, xmax, ymax) or sf bbox object in WGS84 (EPSG:4326). Optional if data is provided.}
 
 \item{crs}{Coordinate reference system (default: 4326 for WGS84). Can be an EPSG code or crs object.}
 
