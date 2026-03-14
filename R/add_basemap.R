@@ -161,12 +161,27 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
 extract_bbox_from_sf <- function(data, padding) {
   # Check CRS and transform to WGS84 if needed
   data_crs <- sf::st_crs(data)
-  if (is.na(data_crs) || data_crs$epsg != 4326) {
-    if (!is.na(data_crs)) {
+  
+  if (is.na(data_crs)) {
+    warning("Data has no CRS, assuming WGS84 (EPSG:4326)")
+    sf::st_crs(data) <- 4326
+  } else {
+    # Check if it's already WGS84 (handle both EPSG:4326 and OGC:CRS84)
+    crs_epsg <- data_crs$epsg
+    crs_wkt <- data_crs$wkt
+    
+    is_wgs84 <- FALSE
+    if (!is.null(crs_epsg) && !is.na(crs_epsg) && crs_epsg == 4326) {
+      is_wgs84 <- TRUE
+    } else if (!is.null(crs_wkt) && grepl("WGS 84|WGS84|EPSG.*4326", crs_wkt, ignore.case = TRUE)) {
+      is_wgs84 <- TRUE
+    }
+    
+    if (!is_wgs84) {
+      if (any(grepl("metre|meter|m", sf::st_crs(data, parameters = TRUE)$units_gdal, ignore.case = TRUE))) {
+        message("Converting data from projected CRS to WGS84 (EPSG:4326) for tile calculation...")
+      }
       data <- sf::st_transform(data, 4326)
-    } else {
-      warning("Data has no CRS, assuming WGS84 (EPSG:4326)")
-      sf::st_crs(data) <- 4326
     }
   }
   
