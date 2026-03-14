@@ -3,7 +3,7 @@ Type: Package
 Title: Add Basemap Tiles to ggplot2
 Version: 0.1.0
 Authors@R: 
-    person("Your", "Name", email = "your.email@example.com", role = c("aut", "cre"))
+    person("Cédric", "Bouffard", email = "info@cedricbouffard.com", role = c("aut", "cre"))
 Description: Provides a function to add basemap tiles from XYZ tile servers
     to ggplot2 plots. Automatically detects bounding boxes and calculates
     appropriate zoom levels.

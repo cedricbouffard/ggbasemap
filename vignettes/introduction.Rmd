@@ -1,7 +1,7 @@
 ---
 title: "Introduction to ggbasemap"
-author: "Your Name"
-date: "`r Sys.Date()`"
+author: "Cédric Bouffard"
+date: "2026-03-14"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Introduction to ggbasemap}
@@ -15,11 +15,12 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.width = 8,
   fig.height = 6,
-  out.width = "100%"
+  out.width = "100%",
+  eval = FALSE  # Set to TRUE locally to see figures, FALSE for CRAN
 )
 ```
 
-```{r setup}
+```{r setup, eval=TRUE}
 library(ggbasemap)
 library(ggplot2)
 library(sf)
@@ -27,43 +28,33 @@ library(sf)
 
 ## Overview
 
-**ggbasemap** is an R package that makes it easy to add basemap tiles from XYZ tile servers (like OpenStreetMap, Google, ESRI) to ggplot2 plots. It automatically detects bounding boxes, calculates appropriate zoom levels, and handles all the technical details of fetching and displaying tiles.
+**ggbasemap** is an R package that makes it easy to add basemap tiles from XYZ tile servers (like OpenStreetMap, Google, ESRI) to ggplot2 plots. It automatically detects bounding boxes, calculates appropriate zoom levels, and provides powerful image styling options.
 
 ### Key Features
 
 - **Automatic zoom calculation**: No need to guess the right zoom level
 - **Multiple tile sources**: Works with OpenStreetMap, Google, ESRI, CartoDB, and more
 - **Image transformations**: Grayscale, saturation, brightness, contrast, gamma
-- **Map rotation**: Rotate maps to any angle using Oblique Mercator projection
+- **Map rotation**: Rotate maps to any angle with Oblique Mercator projection
 - **Web Mercator native**: Tiles are kept in EPSG:3857 for sharpest display
 - **sf compatible**: Works seamlessly with sf objects
 
 ## Quick Start
 
-### Installation
-
-```r
-# Install from GitHub
-devtools::install_github("yourusername/ggbasemap")
-
-# Or from local source
-devtools::install("path/to/ggbasemap")
-```
-
 ### Basic Usage with sf Objects
 
 The simplest way to use `ggbasemap` is with an sf object:
 
-```{r basic-example, eval=FALSE}
+```{r basic-example, eval=TRUE, fig.cap="Basic map with OpenStreetMap basemap"}
 # Load required libraries
 library(ggbasemap)
 library(ggplot2)
 library(sf)
 
-# Read some spatial data
+# Read spatial data (included with sf package)
 nc <- st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 
-# Create a map with basemap
+# Create map with basemap
 ggplot() +
   add_basemap(nc) +
   geom_sf(data = nc, fill = NA, color = "red", linewidth = 1)
@@ -79,48 +70,26 @@ This will:
 
 If you have data in a data frame with longitude and latitude columns:
 
-```{r df-example, eval=FALSE}
+```{r df-example, fig.cap="Map with data frame coordinates"}
 df <- data.frame(
-  city = c("NYC", "Boston", "Philadelphia"),
-  lon = c(-74.006, -71.0589, -75.1652),
-  lat = c(40.7128, 42.3601, 39.9526)
+  lon = c(-74.0060, -73.9352),
+  lat = c(40.7128, 40.7306),
+  city = c("NYC", "Manhattan")
 )
 
 ggplot() +
   add_basemap(df, "lon", "lat") +
-  geom_point(data = df, aes(x = lon, y = lat), 
-             color = "red", size = 3) +
-  geom_text(data = df, aes(x = lon, y = lat, label = city),
-            vjust = -1, color = "white")
+  geom_point(data = df, aes(x = lon, y = lat), color = "red", size = 3)
 ```
 
 ### Different Tile Sources
 
 You can easily switch between different tile providers:
 
-```{r tiles, eval=FALSE}
-# OpenStreetMap (default)
-ggplot() + add_basemap(nc)
-
-# Google Satellite
+```{r tiles-osm, fig.cap="OpenStreetMap tiles (default)"}
 ggplot() +
-  add_basemap(nc, 
-    url = "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}")
-
-# ESRI World Imagery
-ggplot() +
-  add_basemap(nc,
-    url = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}")
-
-# CartoDB Positron (clean, light)
-ggplot() +
-  add_basemap(nc,
-    url = "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png")
-
-# OpenTopoMap (topographic)
-ggplot() +
-  add_basemap(nc,
-    url = "https://a.tile.opentopomap.org/{z}/{x}/{y}.png")
+  add_basemap(nc) +
+  geom_sf(data = nc, fill = NA, color = "red")
 ```
 
 ## Understanding the Parameters
@@ -151,41 +120,26 @@ ggplot() +
 
 ### Pattern 1: Simple Map
 
-```{r pattern1, eval=FALSE}
-# Just add basemap to your ggplot
+```{r pattern1, fig.cap="Simple basemap"}
 ggplot() +
-  add_basemap(my_data) +
-  geom_sf(data = my_data)
+  add_basemap(nc) +
+  geom_sf(data = nc)
 ```
 
 ### Pattern 2: Styled Basemap
 
-```{r pattern2, eval=FALSE}
-# Adjust transparency and sharpness
+```{r pattern2, fig.cap="Styled basemap with transparency"}
 ggplot() +
-  add_basemap(my_data, alpha = 0.7, zoom = 15) +
-  geom_sf(data = my_data, fill = NA, color = "red")
+  add_basemap(nc, alpha = 0.7, zoom = 15) +
+  geom_sf(data = nc, fill = NA, color = "red")
 ```
 
 ### Pattern 3: Themed Basemap
 
-```{r pattern3, eval=FALSE}
-# Create a specific mood
+```{r pattern3, fig.cap="Grayscale basemap"}
 ggplot() +
-  add_basemap(my_data,
-              grayscale = TRUE,
-              brightness = 0.9,
-              contrast = 1.2) +
-  geom_sf(data = my_data, color = "white")
-```
-
-### Pattern 4: With Manual Zoom
-
-```{r pattern4, eval=FALSE}
-# Force a specific zoom level
-ggplot() +
-  add_basemap(my_data, zoom = 14) +
-  geom_sf(data = my_data)
+  add_basemap(nc, grayscale = TRUE, brightness = 0.9, contrast = 1.2) +
+  geom_sf(data = nc, color = "white")
 ```
 
 ## Tips and Best Practices
@@ -203,37 +157,23 @@ The package auto-calculates zoom level, but sometimes you want control:
 
 For large geographic areas, consider:
 
-```{r large-area, eval=FALSE}
-# Use lower zoom for large areas
+```{r large-area, fig.cap="Large area with lower zoom"}
 ggplot() +
-  add_basemap(big_country, zoom = 6, padding = 0.05) +
-  geom_sf(data = big_country)
+  add_basemap(nc, zoom = 6, padding = 0.05) +
+  geom_sf(data = nc)
 ```
 
 ### 3. Combining with Other Layers
 
-```{r layers, eval=FALSE}
+```{r layers, fig.cap="Multiple layers with basemap"}
 ggplot() +
   # Base layer: basemap
-  add_basemap(my_data, alpha = 0.6) +
+  add_basemap(nc, alpha = 0.6) +
   # Middle layer: boundaries
-  geom_sf(data = boundaries, fill = NA, color = "black") +
-  # Top layer: your data
-  geom_sf(data = my_data, aes(color = category), size = 2) +
+  geom_sf(data = nc, aes(fill = AREA), alpha = 0.5) +
   # Legend and theme
-  scale_color_viridis_d() +
+  scale_fill_viridis_c() +
   theme_minimal()
-```
-
-### 4. Saving Your Maps
-
-```{r save, eval=FALSE}
-p <- ggplot() +
-  add_basemap(nc) +
-  geom_sf(data = nc)
-
-# Save with high resolution
-ggsave("my_map.png", p, width = 10, height = 8, dpi = 300)
 ```
 
 ## Troubleshooting
@@ -247,38 +187,27 @@ If you get "Could not fetch any tiles" errors:
 3. Some corporate networks block tile servers
 4. Use `verbose = TRUE` to see what's happening:
 
-```{r verbose, eval=FALSE}
+```{r verbose}
 ggplot() +
-  add_basemap(my_data, verbose = TRUE) +
-  geom_sf(data = my_data)
+  add_basemap(nc, verbose = TRUE) +
+  geom_sf(data = nc)
 ```
 
 ### Blurry Images
 
 The auto-zoom adds +1 for sharper images, but you can increase further:
 
-```{r sharp, eval=FALSE}
+```{r sharp, fig.cap="High zoom for sharp images"}
 ggplot() +
-  add_basemap(my_data, zoom = 16) +  # Force high zoom
-  geom_sf(data = my_data)
-```
-
-### Cropped Maps
-
-If your data is getting cut off, increase padding:
-
-```{r padding, eval=FALSE}
-ggplot() +
-  add_basemap(my_data, padding = 0.3) +  # 30% extra space
-  geom_sf(data = my_data)
+  add_basemap(nc, zoom = 16) +
+  geom_sf(data = nc)
 ```
 
 ## Next Steps
 
 - Learn about **[Map Rotation](rotation.html)** to create angled maps
 - Explore **[Image Transformations](transformations.html)** for styled basemaps
-- See **[Advanced Usage](advanced-usage.html)** for power users
-- Check the **[FAQ](faq.html)** for common questions
+- Check the **FAQ** for common questions
 
 ## References
 
