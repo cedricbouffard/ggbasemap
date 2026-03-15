@@ -197,6 +197,78 @@ ggplot() +
 
 ## Complete Example
 
+## Controlling Aspect Ratio
+
+You can control the aspect ratio (width/height) of the rotated map using the `ratio` parameter. This is useful for fitting maps to specific output formats:
+
+### Common Aspect Ratios
+
+```{r ratio-169, fig.cap="Widescreen 16:9 ratio"}
+# 16:9 - Perfect for presentations and widescreen displays
+rot_16_9 <- coord_rotate(nc, 45, ratio = 16/9)
+
+ggplot() +
+  add_basemap(nc, bbox = rot_16_9$bbox) +
+  geom_sf(data = nc, fill = NA, color = "red", linewidth = 1) +
+  rot_16_9$coord +
+  ggtitle("16:9 Widescreen Format")
+```
+
+```{r ratio-43, fig.cap="Standard 4:3 ratio"}
+# 4:3 - Classic presentation format
+rot_4_3 <- coord_rotate(nc, 45, ratio = 4/3)
+
+ggplot() +
+  add_basemap(nc, bbox = rot_4_3$bbox) +
+  geom_sf(data = nc, fill = NA, color = "blue", linewidth = 1) +
+  rot_4_3$coord +
+  ggtitle("4:3 Standard Format")
+```
+
+```{r ratio-square, fig.cap="Square 1:1 ratio"}
+# 1:1 - Square format (good for Instagram, posters)
+rot_square <- coord_rotate(nc, 45, ratio = 1)
+
+ggplot() +
+  add_basemap(nc, bbox = rot_square$bbox) +
+  geom_sf(data = nc, fill = NA, color = "green", linewidth = 1) +
+  rot_square$coord +
+  ggtitle("1:1 Square Format")
+```
+
+### How It Works
+
+When you specify a ratio:
+- The function calculates the natural bbox of your rotated data
+- If the natural ratio is different from your target ratio, it expands the bbox to match
+- The bbox is always expanded (never cropped) to ensure all data is visible
+- Both the tile bbox and the coordinate limits are adjusted
+
+### Practical Example: Publication Figure
+
+```{r ratio-publication, fig.cap="Publication-ready figure with custom ratio"}
+# Create a 2:1 ratio figure for a journal article
+rot_pub <- coord_rotate(nc, 30, ratio = 2)
+
+ggplot() +
+  add_basemap(nc, 
+              bbox = rot_pub$bbox,
+              saturation = 0.5,
+              contrast = 1.1) +
+  geom_sf(data = nc, 
+          aes(fill = AREA),
+          color = "white",
+          linewidth = 0.3) +
+  rot_pub$coord +
+  scale_fill_viridis_c() +
+  theme_void() +
+  theme(legend.position = "bottom") +
+  ggtitle("North Carolina - 2:1 Aspect Ratio",
+          subtitle = "Perfect for journal figures")
+```
+
+## Complete Example
+
 Here's a complete, publication-ready example:
 
 ```{r complete-example, fig.cap="Complete example with rotation"}
