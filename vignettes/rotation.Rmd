@@ -42,8 +42,6 @@ Map rotation allows you to present your spatial data at an angle, which can be u
 
 ## Basic Rotation
 
-### Simple Example
-
 To rotate a map, use the `coord_rotate()` function:
 
 ```{r basic-rotation, fig.cap="Map rotated 45 degrees"}
@@ -58,8 +56,6 @@ ggplot() +
   ggtitle("North Carolina rotated 45°")
 ```
 
-### What coord_rotate() Returns
-
 The `coord_rotate()` function returns a list with:
 
 - **`coord`**: A `coord_sf` object that applies the rotation
@@ -67,72 +63,37 @@ The `coord_rotate()` function returns a list with:
 - **`crs`**: The coordinate reference system string used
 - **`angle`**: The rotation angle in degrees
 
-## Understanding the Components
-
-### The Expanded Bounding Box
-
-When you rotate a map, the corners extend beyond the original bounding box. The `bbox` returned by `coord_rotate()` is expanded to ensure the entire rotated map is covered:
-
-```{r expanded-bbox}
-# Original bbox
-orig_bbox <- sf::st_bbox(nc)
-print(orig_bbox)
-
-# Rotated bbox (notice it's larger)
-rot <- coord_rotate(nc, 45)
-print(rot$bbox)
-```
-
 ## Rotation Angles
 
-### Common Angles
+Different rotation angles produce different visual effects:
 
-```{r angle-0, fig.cap="No rotation (0°)"}
+```{r angle-comparison, fig.cap="Comparison of rotation angles"}
+# Create a 2-panel comparison
+library(patchwork)
+
+# No rotation
 rot0 <- coord_rotate(nc, 0)
-ggplot() +
+p0 <- ggplot() +
   add_basemap(nc, bbox = rot0$bbox) +
-  geom_sf(data = nc) +
+  geom_sf(data = nc, fill = NA, color = "red") +
   rot0$coord +
-  ggtitle("0° (No Rotation)")
-```
+  ggtitle("0° (No Rotation)") +
+  theme_void()
 
-```{r angle-30, fig.cap="30° rotation"}
-rot30 <- coord_rotate(nc, 30)
-ggplot() +
-  add_basemap(nc, bbox = rot30$bbox) +
-  geom_sf(data = nc) +
-  rot30$coord +
-  ggtitle("30° Rotation")
-```
-
-```{r angle-45, fig.cap="45° rotation"}
+# 45 degree rotation
 rot45 <- coord_rotate(nc, 45)
-ggplot() +
+p45 <- ggplot() +
   add_basemap(nc, bbox = rot45$bbox) +
-  geom_sf(data = nc) +
+  geom_sf(data = nc, fill = NA, color = "blue") +
   rot45$coord +
-  ggtitle("45° Rotation")
+  ggtitle("45° Rotation") +
+  theme_void()
+
+# Display side by side
+p0 + p45
 ```
 
-## Practical Examples
-
-### Example 1: Fitting a Page Layout
-
-Sometimes your data is oriented at an angle that doesn't fit well in a standard rectangular plot:
-
-```{r fit-page, fig.cap="Rotated for better page fit"}
-# Rotated (better fit)
-rot <- coord_rotate(nc, 30)
-ggplot() +
-  add_basemap(nc, bbox = rot$bbox) +
-  geom_sf(data = nc) +
-  rot$coord +
-  ggtitle("Rotated 30° (better fit)")
-```
-
-## Advanced Rotation
-
-### Combining with Transformations
+## Combining with Transformations
 
 Rotation works perfectly with image transformations:
 
@@ -149,167 +110,65 @@ ggplot() +
   ggtitle("Rotated + Styled")
 ```
 
-### Multiple Layers
-
-You can add multiple layers on top of the rotated basemap:
-
-```{r layers, fig.cap="Multiple layers with rotation"}
-rot <- coord_rotate(nc, 30)
-
-ggplot() +
-  # Base: rotated basemap
-  add_basemap(nc, bbox = rot$bbox, alpha = 0.7) +
-  # Layer 1: county boundaries
-  geom_sf(data = nc, aes(fill = AREA), alpha = 0.5) +
-  # Apply rotation to all
-  rot$coord +
-  scale_fill_viridis_c() +
-  theme_void()
-```
-
-### Custom Styling
-
-```{r custom-style, fig.cap="Night mode style with rotation"}
-rot <- coord_rotate(nc, 45)
-
-ggplot() +
-  add_basemap(nc, 
-              bbox = rot$bbox,
-              zoom = 12,
-              saturation = 0.5) +
-  geom_sf(data = nc, 
-          fill = NA, 
-          color = "white",
-          linewidth = 1) +
-  rot$coord +
-  theme(
-    panel.background = element_rect(fill = "black"),
-    plot.background = element_rect(fill = "black"),
-    panel.grid = element_blank()
-  ) +
-  ggtitle("Night Mode Style",
-          subtitle = "45° rotation") +
-  theme(
-    plot.title = element_text(color = "white", size = 20),
-    plot.subtitle = element_text(color = "gray70", size = 14)
-  )
-```
-
-## Complete Example
-
 ## Controlling Aspect Ratio
 
-You can control the aspect ratio (width/height) of the rotated map using the `ratio` parameter. This is useful for fitting maps to specific output formats:
+You can control the aspect ratio (width/height) of the rotated map using the `ratio` parameter:
 
-### Common Aspect Ratios
+```{r ratio-example, fig.cap="Different aspect ratios"}
+# Create comparison of different ratios
+rot_169 <- coord_rotate(nc, 45, ratio = 16/9)
+rot_11 <- coord_rotate(nc, 45, ratio = 1)
 
-```{r ratio-169, fig.cap="Widescreen 16:9 ratio"}
-# 16:9 - Perfect for presentations and widescreen displays
-rot_16_9 <- coord_rotate(nc, 45, ratio = 16/9)
+p169 <- ggplot() +
+  add_basemap(nc, bbox = rot_169$bbox) +
+  geom_sf(data = nc, fill = NA, color = "darkblue") +
+  rot_169$coord +
+  ggtitle("16:9 Widescreen") +
+  theme_void()
 
-ggplot() +
-  add_basemap(nc, bbox = rot_16_9$bbox) +
-  geom_sf(data = nc, fill = NA, color = "red", linewidth = 1) +
-  rot_16_9$coord +
-  ggtitle("16:9 Widescreen Format")
+p11 <- ggplot() +
+  add_basemap(nc, bbox = rot_11$bbox) +
+  geom_sf(data = nc, fill = NA, color = "darkgreen") +
+  rot_11$coord +
+  ggtitle("1:1 Square") +
+  theme_void()
+
+p169 + p11
 ```
 
-```{r ratio-43, fig.cap="Standard 4:3 ratio"}
-# 4:3 - Classic presentation format
-rot_4_3 <- coord_rotate(nc, 45, ratio = 4/3)
-
-ggplot() +
-  add_basemap(nc, bbox = rot_4_3$bbox) +
-  geom_sf(data = nc, fill = NA, color = "blue", linewidth = 1) +
-  rot_4_3$coord +
-  ggtitle("4:3 Standard Format")
-```
-
-```{r ratio-square, fig.cap="Square 1:1 ratio"}
-# 1:1 - Square format (good for Instagram, posters)
-rot_square <- coord_rotate(nc, 45, ratio = 1)
-
-ggplot() +
-  add_basemap(nc, bbox = rot_square$bbox) +
-  geom_sf(data = nc, fill = NA, color = "green", linewidth = 1) +
-  rot_square$coord +
-  ggtitle("1:1 Square Format")
-```
-
-### How It Works
-
-When you specify a ratio:
-- The function calculates the natural bbox of your rotated data
-- If the natural ratio is different from your target ratio, it expands the bbox to match
-- The bbox is always expanded (never cropped) to ensure all data is visible
-- Both the tile bbox and the coordinate limits are adjusted
-
-### Practical Example: Publication Figure
-
-```{r ratio-publication, fig.cap="Publication-ready figure with custom ratio"}
-# Create a 2:1 ratio figure for a journal article
-rot_pub <- coord_rotate(nc, 30, ratio = 2)
-
-ggplot() +
-  add_basemap(nc, 
-              bbox = rot_pub$bbox,
-              saturation = 0.5,
-              contrast = 1.1) +
-  geom_sf(data = nc, 
-          aes(fill = AREA),
-          color = "white",
-          linewidth = 0.3) +
-  rot_pub$coord +
-  scale_fill_viridis_c() +
-  theme_void() +
-  theme(legend.position = "bottom") +
-  ggtitle("North Carolina - 2:1 Aspect Ratio",
-          subtitle = "Perfect for journal figures")
-```
+Common ratio values:
+- `16/9` for widescreen displays and presentations
+- `4/3` for standard presentation format
+- `1` for square format (social media, posters)
+- Custom values like `2` or `0.5` for specific layouts
 
 ## Complete Example
 
-Here's a complete, publication-ready example:
+Here's a complete example combining multiple features:
 
 ```{r complete-example, fig.cap="Complete example with rotation"}
 library(viridis)
 
-# Calculate rotation (30 degrees looks good for this shape)
+# Calculate rotation
 rot <- coord_rotate(nc, 30)
 
 # Create the map
 ggplot() +
-  # Base layer: styled basemap
   add_basemap(nc, 
               bbox = rot$bbox,
-              zoom = 9,
               saturation = 0.4,
-              brightness = 1.05,
-              contrast = 1.1) +
-  # Data layer: counties with fill
+              brightness = 1.05) +
   geom_sf(data = nc, 
           aes(fill = AREA),
           color = "white",
           linewidth = 0.3,
           alpha = 0.8) +
-  # Apply rotation
   rot$coord +
-  # Color scale
-  scale_fill_viridis_c(option = "magma",
-                       name = "Area (sq km)",
-                       labels = scales::comma) +
-  # Theme
+  scale_fill_viridis_c(option = "magma") +
   theme_void() +
-  theme(
-    legend.position = "bottom",
-    legend.key.width = unit(2, "cm"),
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "gray40")
-  ) +
-  # Labels
+  theme(legend.position = "bottom") +
   labs(title = "North Carolina Counties",
-       subtitle = "Rotated 30° for optimal layout",
-       caption = "Data: North Carolina county boundaries")
+       subtitle = "Rotated 30° for optimal layout")
 ```
 
 ## Next Steps
