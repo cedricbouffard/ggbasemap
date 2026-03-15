@@ -26,14 +26,27 @@ jobs:
         with:
           use-public-rspm: true
 
+      - name: Cache vignette figures
+        uses: actions/cache@v3
+        with:
+          path: |
+            docs/articles/**
+            vignettes/*_files/**
+          key: vignettes-${{ hashFiles('vignettes/*.Rmd') }}
+          restore-keys: |
+            vignettes-
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::pkgdown, local::.
           needs: website
 
       - name: Build site
-        run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
+        run: |
+          options(timeout = 600)
+          pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE, lazy = TRUE)
         shell: Rscript {0}
+        timeout-minutes: 30
 
       - name: Deploy to GitHub pages 🚀
         if: github.event_name != 'pull_request'
