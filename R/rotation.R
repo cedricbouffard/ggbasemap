@@ -79,76 +79,55 @@ coord_rotate <- function(x, angle, ratio = NULL) {
     ymax = max(rotated_points[, 2])
   )
   
-  # If ratio is specified, adjust the bbox to fit that aspect ratio
-  if (!is.null(ratio)) {
-    bbox_width <- expanded_bbox["xmax"] - expanded_bbox["xmin"]
-    bbox_height <- expanded_bbox["ymax"] - expanded_bbox["ymin"]
-    current_ratio <- bbox_width / bbox_height
-    
-    centroid_x <- (expanded_bbox["xmin"] + expanded_bbox["xmax"]) / 2
-    centroid_y <- (expanded_bbox["ymin"] + expanded_bbox["ymax"]) / 2
-    
-    if (current_ratio < ratio) {
-      # Need to increase width
-      new_width <- bbox_height * ratio
-      expanded_bbox["xmin"] <- centroid_x - new_width / 2
-      expanded_bbox["xmax"] <- centroid_x + new_width / 2
-    } else {
-      # Need to increase height
-      new_height <- bbox_width / ratio
-      expanded_bbox["ymin"] <- centroid_y - new_height / 2
-      expanded_bbox["ymax"] <- centroid_y + new_height / 2
-    }
-  }
-  
   # Transform x to get extent in rotated CRS
   x_rotated <- sf::st_transform(x, crs = crs_string)
   coords <- sf::st_coordinates(x_rotated)
   
-  # Add padding
+  # Get data extent in rotated CRS
   x_range <- range(coords[, 1])
   y_range <- range(coords[, 2])
-  x_pad <- diff(x_range) * 0.05
-  y_pad <- diff(y_range) * 0.05
-  
-  # If ratio specified, also adjust the coord limits
-  if (!is.null(ratio)) {
-    coord_width <- diff(x_range)
-    coord_height <- diff(y_range)
-    coord_current_ratio <- coord_width / coord_height
-    
-    coord_centroid_x <- mean(x_range)
-    coord_centroid_y <- mean(y_range)
-    
-    if (coord_current_ratio < ratio) {
-      # Need to increase width
-      new_width <- coord_height * ratio
-      x_range <- c(coord_centroid_x - new_width / 2, coord_centroid_x + new_width / 2)
-    } else {
-      # Need to increase height
-      new_height <- coord_width / ratio
-      y_range <- c(coord_centroid_y - new_height / 2, coord_centroid_y + new_height / 2)
-    }
-  }
   
   sf::sf_use_s2(old_s2)
   
-  # Calculate the bbox for tiles in the ROTATED CRS with ratio adjustment
-  # This ensures the tile bbox matches the coord_sf limits
+  # Calculate final ranges with padding in ROTATED CRS (meters)
+  x_pad <- diff(x_range) * 0.05
+  y_pad <- diff(y_range) * 0.05
   tile_x_range <- c(x_range[1] - x_pad, x_range[2] + x_pad)
   tile_y_range <- c(y_range[1] - y_pad, y_range[2] + y_pad)
   
-  # Create the tile bbox polygon in rotated CRS
-  tile_bbox_rotated <- sf::st_bbox(c(xmin = tile_x_range[1], ymin = tile_y_range[1],
-                                      xmax = tile_x_range[2], ymax = tile_y_range[2]))
-  tile_bbox_poly <- sf::st_as_sfc(tile_bbox_rotated)
-  sf::st_crs(tile_bbox_poly) <- crs_string
+  # Apply ratio adjustment in ROTATED CRS where it makes sense
+  if (!is.null(ratio)) {
+    tile_width <- tile_x_range[2] - tile_x_range[1]
+    tile_height <- tile_y_range[2] - tile_y_range[1]
+    tile_current_ratio <- tile_width / tile_height
+    
+    tile_centroid_x <- mean(tile_x_range)
+    tile_centroid_y <- mean(tile_y_range)
+    
+    if (tile_current_ratio < ratio) {
+      # Need to increase width
+      new_width <- tile_height * ratio
+      tile_x_range <- c(tile_centroid_x - new_width / 2, tile_centroid_x + new_width / 2)
+    } else {
+      # Need to increase height
+      new_height <- tile_width / ratio
+      tile_y_range <- c(tile_centroid_y - new_height / 2, tile_centroid_y + new_height / 2)
+    }
+  }
+  
+  # Create the tile bbox polygon in ROTATED CRS (meters)
+  tile_bbox_rotated <- sf::st_sfc(sf::st_polygon(list(rbind(
+    c(tile_x_range[1], tile_y_range[1]),
+    c(tile_x_range[2], tile_y_range[1]),
+    c(tile_x_range[2], tile_y_range[2]),
+    c(tile_x_range[1], tile_y_range[2]),
+    c(tile_x_range[1], tile_y_range[1])
+  ))))
+  sf::st_crs(tile_bbox_rotated) <- crs_string
   
   # Transform to WGS84 for add_basemap
-  tile_bbox_wgs84 <- sf::st_bbox(sf::st_transform(tile_bbox_poly, 4326))
-  
-  # Create the clip polygon (same as tile bbox)
-  clip_poly_wgs84 <- sf::st_transform(tile_bbox_poly, 4326)
+  tile_bbox_wgs84 <- sf::st_bbox(sf::st_transform(tile_bbox_rotated, 4326))
+  clip_poly_wgs84 <- sf::st_transform(tile_bbox_rotated, 4326)
   
   list(
     coord = ggplot2::coord_sf(xlim = tile_x_range, 
