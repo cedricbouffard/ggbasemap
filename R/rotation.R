@@ -127,11 +127,38 @@ coord_rotate <- function(x, angle, ratio = NULL) {
   
   sf::sf_use_s2(old_s2)
   
+  # Convert the expanded bbox to WGS84 for use with add_basemap
+  # Create a polygon from the expanded bbox and transform it to WGS84
+  expanded_bbox_poly <- sf::st_as_sfc(sf::st_bbox(expanded_bbox))
+  sf::st_crs(expanded_bbox_poly) <- sf::st_crs(x)
+  expanded_bbox_wgs84 <- sf::st_bbox(sf::st_transform(expanded_bbox_poly, 4326))
+  
+  # Also create the polygon of the actual rotated data extent for clipping
+  # This represents the area that should be visible after rotation
+  x_wgs84 <- sf::st_transform(x, 4326)
+  data_bbox_wgs84 <- sf::st_bbox(x_wgs84)
+  data_bbox_poly <- sf::st_as_sfc(data_bbox_wgs84)
+  sf::st_crs(data_bbox_poly) <- sf::st_crs(4326)
+  
+  # Create corner points of the data bbox for rotation
+  data_coords <- sf::st_coordinates(data_bbox_poly)[, 1:2]
+  data_centroid_wgs84 <- sf::st_coordinates(sf::st_transform(centroid, 4326))
+  
+  # Rotate the corner points around the centroid in WGS84 space
+  rotated_corners <- t(apply(data_coords, 1, function(pt) {
+    (pt - data_centroid_wgs84) %*% rot(angle) + data_centroid_wgs84
+  }))
+  
+  # Create a polygon from rotated corners (convex hull)
+  rotated_poly <- sf::st_convex_hull(sf::st_multipoint(rotated_corners))
+  sf::st_crs(rotated_poly) <- sf::st_crs(4326)
+  
   list(
     coord = ggplot2::coord_sf(xlim = c(x_range[1] - x_pad, x_range[2] + x_pad), 
                               ylim = c(y_range[1] - y_pad, y_range[2] + y_pad), 
                               crs = crs_string, expand = FALSE),
-    bbox = expanded_bbox,
+    bbox = expanded_bbox_wgs84,
+    clip_poly = rotated_poly,
     crs = crs_string,
     angle = angle,
     ratio = ratio

@@ -20,6 +20,8 @@
 #' @param brightness Brightness multiplier (1 = no change, <1 = darker, >1 = brighter, default 1)
 #' @param contrast Contrast multiplier (1 = no change, <1 = less contrast, >1 = more contrast, default 1)
 #' @param gamma Gamma correction value (1 = no change, <1 = brighter midtones, >1 = darker midtones, default 1)
+#' @param clip Optional sf/sfc polygon to clip the basemap to. Useful when using rotation with coord_rotate().
+#'   Pass `rot$clip_poly` from coord_rotate() to clip the basemap to the rotated extent.
 #' @param verbose Print debugging information (default FALSE)
 #'
 #' @return A ggplot2 layer (or list of layers) that can be added to a plot
@@ -28,7 +30,7 @@
 #' @importFrom png readPNG
 #' @importFrom rlang ensym as_name is_missing
 #' @importFrom sf st_bbox st_as_sf st_set_crs st_transform st_coordinates st_is
-#' @importFrom terra rast ext crs
+#' @importFrom terra rast ext crs mask crop
 #' @import ggplot2
 #'
 #' @examples
@@ -81,6 +83,7 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
                          brightness = 1,
                          contrast = 1,
                          gamma = 1,
+                         clip = NULL,
                          verbose = FALSE) {
   
   # Determine bbox from inputs
