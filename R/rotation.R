@@ -133,36 +133,28 @@ coord_rotate <- function(x, angle, ratio = NULL) {
   
   sf::sf_use_s2(old_s2)
   
-  # Convert the expanded bbox to WGS84 for use with add_basemap
-  # Create a polygon from the expanded bbox and transform it to WGS84
-  expanded_bbox_poly <- sf::st_as_sfc(sf::st_bbox(expanded_bbox))
-  sf::st_crs(expanded_bbox_poly) <- sf::st_crs(x)
-  expanded_bbox_wgs84 <- sf::st_bbox(sf::st_transform(expanded_bbox_poly, 4326))
+  # Calculate the bbox for tiles in the ROTATED CRS with ratio adjustment
+  # This ensures the tile bbox matches the coord_sf limits
+  tile_x_range <- c(x_range[1] - x_pad, x_range[2] + x_pad)
+  tile_y_range <- c(y_range[1] - y_pad, y_range[2] + y_pad)
   
-  # Create the clip polygon in the ROTATED CRS (aligned with the view)
-  # then transform to WGS84. This ensures the clip matches the coord_sf projection.
-  # Get the extent in rotated CRS (which is what coord_sf displays)
-  x_rotated_bbox <- c(x_range[1] - x_pad, x_range[2] + x_pad)
-  y_rotated_bbox <- c(y_range[1] - y_pad, y_range[2] + y_pad)
+  # Create the tile bbox polygon in rotated CRS
+  tile_bbox_rotated <- sf::st_bbox(c(xmin = tile_x_range[1], ymin = tile_y_range[1],
+                                      xmax = tile_x_range[2], ymax = tile_y_range[2]))
+  tile_bbox_poly <- sf::st_as_sfc(tile_bbox_rotated)
+  sf::st_crs(tile_bbox_poly) <- crs_string
   
-  # Create a rectangle in the rotated CRS
-  clip_rect_rotated <- sf::st_sfc(sf::st_polygon(list(rbind(
-    c(x_rotated_bbox[1], y_rotated_bbox[1]),
-    c(x_rotated_bbox[2], y_rotated_bbox[1]),
-    c(x_rotated_bbox[2], y_rotated_bbox[2]),
-    c(x_rotated_bbox[1], y_rotated_bbox[2]),
-    c(x_rotated_bbox[1], y_rotated_bbox[1])
-  ))))
-  sf::st_crs(clip_rect_rotated) <- crs_string
+  # Transform to WGS84 for add_basemap
+  tile_bbox_wgs84 <- sf::st_bbox(sf::st_transform(tile_bbox_poly, 4326))
   
-  # Transform to WGS84 for use with add_basemap
-  clip_poly_wgs84 <- sf::st_transform(clip_rect_rotated, 4326)
+  # Create the clip polygon (same as tile bbox)
+  clip_poly_wgs84 <- sf::st_transform(tile_bbox_poly, 4326)
   
   list(
-    coord = ggplot2::coord_sf(xlim = c(x_range[1] - x_pad, x_range[2] + x_pad), 
-                              ylim = c(y_range[1] - y_pad, y_range[2] + y_pad), 
+    coord = ggplot2::coord_sf(xlim = tile_x_range, 
+                              ylim = tile_y_range, 
                               crs = crs_string, expand = FALSE),
-    bbox = expanded_bbox_wgs84,
+    bbox = tile_bbox_wgs84,
     clip_poly = clip_poly_wgs84,
     crs = crs_string,
     angle = angle,
