@@ -17,7 +17,13 @@ rot <- function(a) {
 #' @param angle Rotation angle in degrees
 #' @param ratio Aspect ratio (width/height) for the output bbox. Default NULL uses natural ratio.
 #'   Common values: 16/9 for widescreen, 4/3 for standard, 1 for square.
-#' @return List with coord (coord_sf), bbox (expanded bbox in WGS84), and crs
+#' @return List with:
+#'   - `coord`: A coord_sf object for the rotated view
+#'   - `bbox`: Expanded bbox in WGS84 covering the rotated area (adjusted for ratio if specified)
+#'   - `clip_poly`: sf polygon in WGS84 representing the rotated view extent for clipping
+#'   - `crs`: The CRS string used for rotation
+#'   - `angle`: Rotation angle in degrees
+#'   - `ratio`: Aspect ratio (if specified)
 #' @export
 coord_rotate <- function(x, angle, ratio = NULL) {
   # Temporarily disable S2 to avoid geometry errors
@@ -127,21 +133,37 @@ coord_rotate <- function(x, angle, ratio = NULL) {
   
   sf::sf_use_s2(old_s2)
   
-  # Return bbox in WGS84 for use with add_basemap
-  # Use the original data's WGS84 bbox expanded by 40% to cover rotation
-  bbox_wgs84 <- sf::st_bbox(sf::st_transform(x, 4326))
-  x_range_wgs84 <- bbox_wgs84["xmax"] - bbox_wgs84["xmin"]
-  y_range_wgs84 <- bbox_wgs84["ymax"] - bbox_wgs84["ymin"]
-  bbox_wgs84["xmin"] <- bbox_wgs84["xmin"] - x_range_wgs84 * 0.2
-  bbox_wgs84["xmax"] <- bbox_wgs84["xmax"] + x_range_wgs84 * 0.2
-  bbox_wgs84["ymin"] <- bbox_wgs84["ymin"] - y_range_wgs84 * 0.2
-  bbox_wgs84["ymax"] <- bbox_wgs84["ymax"] + y_range_wgs84 * 0.2
+  # Convert the expanded bbox to WGS84 for use with add_basemap
+  # Create a polygon from the expanded bbox and transform it to WGS84
+  expanded_bbox_poly <- sf::st_as_sfc(sf::st_bbox(expanded_bbox))
+  sf::st_crs(expanded_bbox_poly) <- sf::st_crs(x)
+  expanded_bbox_wgs84 <- sf::st_bbox(sf::st_transform(expanded_bbox_poly, 4326))
+  
+  # Create the clip polygon in the ROTATED CRS (aligned with the view)
+  # then transform to WGS84. This ensures the clip matches the coord_sf projection.
+  # Get the extent in rotated CRS (which is what coord_sf displays)
+  x_rotated_bbox <- c(x_range[1] - x_pad, x_range[2] + x_pad)
+  y_rotated_bbox <- c(y_range[1] - y_pad, y_range[2] + y_pad)
+  
+  # Create a rectangle in the rotated CRS
+  clip_rect_rotated <- sf::st_sfc(sf::st_polygon(list(rbind(
+    c(x_rotated_bbox[1], y_rotated_bbox[1]),
+    c(x_rotated_bbox[2], y_rotated_bbox[1]),
+    c(x_rotated_bbox[2], y_rotated_bbox[2]),
+    c(x_rotated_bbox[1], y_rotated_bbox[2]),
+    c(x_rotated_bbox[1], y_rotated_bbox[1])
+  ))))
+  sf::st_crs(clip_rect_rotated) <- crs_string
+  
+  # Transform to WGS84 for use with add_basemap
+  clip_poly_wgs84 <- sf::st_transform(clip_rect_rotated, 4326)
   
   list(
     coord = ggplot2::coord_sf(xlim = c(x_range[1] - x_pad, x_range[2] + x_pad), 
                               ylim = c(y_range[1] - y_pad, y_range[2] + y_pad), 
                               crs = crs_string, expand = FALSE),
-    bbox = bbox_wgs84,
+    bbox = expanded_bbox_wgs84,
+    clip_poly = clip_poly_wgs84,
     crs = crs_string,
     angle = angle,
     ratio = ratio

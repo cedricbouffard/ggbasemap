@@ -15,7 +15,13 @@ coord_rotate(x, angle, ratio = NULL)
 Common values: 16/9 for widescreen, 4/3 for standard, 1 for square.}
 }
 \value{
-List with coord (coord_sf), bbox (expanded bbox in WGS84), and crs
+List with:
+  - `coord`: A coord_sf object for the rotated view
+  - `bbox`: Expanded bbox in WGS84 covering the rotated area (adjusted for ratio if specified)
+  - `clip_poly`: sf polygon in WGS84 representing the rotated view extent for clipping
+  - `crs`: The CRS string used for rotation
+  - `angle`: Rotation angle in degrees
+  - `ratio`: Aspect ratio (if specified)
 }
 \description{
 Creates a coord_sf with rotation applied using Oblique Mercator projection.
