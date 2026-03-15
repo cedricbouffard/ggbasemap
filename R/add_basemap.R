@@ -142,11 +142,13 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
 
   # Apply clipping if a clip polygon is provided
   if (!is.null(clip)) {
-    if (verbose) message("Clipping raster to provided polygon...")
+    if (verbose) message("Clipping raster to bbox for straight edges...")
     # Transform clip polygon to raster CRS (EPSG:3857)
     clip_3857 <- sf::st_transform(clip, crs = "EPSG:3857")
-    # Clip the raster using terra::mask
-    raster_obj <- terra::mask(raster_obj, terra::vect(clip_3857))
+    # Get bbox of clip polygon to ensure straight edges
+    clip_bbox <- sf::st_bbox(clip_3857)
+    # Crop raster to bbox using terra::crop for straight edges
+    raster_obj <- terra::crop(raster_obj, terra::ext(clip_bbox))
   }
 
   # Apply image transformations if requested
@@ -157,7 +159,7 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
   }
 
   # Use ggspatial's annotation_spatial for proper coordinate handling
-  basemap_layer <- ggspatial::layer_spatial(raster_obj,
+  basemap_layer <- ggspatial::annotation_spatial(raster_obj,
                                 alpha = alpha,
                                 interpolate = interpolate)
 
