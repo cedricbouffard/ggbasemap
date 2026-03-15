@@ -140,6 +140,15 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
   # Fetch and create raster
   raster_obj <- fetch_and_create_raster(bbox_vec, zoom, url, verbose)
 
+  # Apply clipping if a clip polygon is provided
+  if (!is.null(clip)) {
+    if (verbose) message("Clipping raster to provided polygon...")
+    # Transform clip polygon to raster CRS (EPSG:3857)
+    clip_3857 <- sf::st_transform(clip, crs = "EPSG:3857")
+    # Clip the raster using terra::mask
+    raster_obj <- terra::mask(raster_obj, terra::vect(clip_3857))
+  }
+
   # Apply image transformations if requested
   if (grayscale || saturation != 1 || brightness != 1 || contrast != 1 || gamma != 1) {
     raster_obj <- apply_image_transforms(raster_obj, grayscale = grayscale, 
