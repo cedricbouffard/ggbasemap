@@ -49,7 +49,7 @@ Also returns the expanded bbox needed to cover the rotated area.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">coord_rotate</span><span class="op">(</span><span class="va">x</span>, <span class="va">angle</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">coord_rotate</span><span class="op">(</span><span class="va">x</span>, <span class="va">angle</span>, ratio <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -62,6 +62,11 @@ Also returns the expanded bbox needed to cover the rotated area.</p>
 
 <dt id="arg-angle">angle<a class="anchor" aria-label="anchor" href="#arg-angle"></a></dt>
 <dd><p>Rotation angle in degrees</p></dd>
+
+
+<dt id="arg-ratio">ratio<a class="anchor" aria-label="anchor" href="#arg-ratio"></a></dt>
+<dd><p>Aspect ratio (width/height) for the output bbox. Default NULL uses natural ratio.
+Common values: 16/9 for widescreen, 4/3 for standard, 1 for square.</p></dd>
 
 </dl></div>
     <div class="section level2">
