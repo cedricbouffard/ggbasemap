@@ -20,7 +20,6 @@ rot <- function(a) {
 #' @return List with:
 #'   - `coord`: A coord_sf object for the rotated view
 #'   - `bbox`: Expanded bbox in WGS84 covering the rotated area (adjusted for ratio if specified)
-#'   - `clip_poly`: sf polygon in WGS84 representing the rotated view extent for clipping
 #'   - `crs`: The CRS string used for rotation
 #'   - `angle`: Rotation angle in degrees
 #'   - `ratio`: Aspect ratio (if specified)
@@ -127,14 +126,12 @@ coord_rotate <- function(x, angle, ratio = NULL) {
   
   # Transform to WGS84 for add_basemap
   tile_bbox_wgs84 <- sf::st_bbox(sf::st_transform(tile_bbox_rotated, 4326))
-  clip_poly_wgs84 <- sf::st_transform(tile_bbox_rotated, 4326)
   
   list(
     coord = ggplot2::coord_sf(xlim = tile_x_range, 
                               ylim = tile_y_range, 
                               crs = crs_string, expand = FALSE),
     bbox = tile_bbox_wgs84,
-    clip_poly = clip_poly_wgs84,
     crs = crs_string,
     angle = angle,
     ratio = ratio

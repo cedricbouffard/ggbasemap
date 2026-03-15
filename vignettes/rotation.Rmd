@@ -152,12 +152,10 @@ library(viridis)
 # Calculate rotation
 rot <- coord_rotate(nc, 30)
 
-# Create the map with clipping for clean edges
+# Create the map
 ggplot() +
   add_basemap(nc, 
               bbox = rot$bbox,
-              clip = rot$clip_poly,
-              coord_crs = rot$crs,
               saturation = 0.4,
               brightness = 1.05) +
   geom_sf(data = nc, 
@@ -171,24 +169,6 @@ ggplot() +
   theme(legend.position = "bottom") +
   labs(title = "North Carolina Counties",
        subtitle = "Rotated 30° for optimal layout")
-```
-
-### Using Clipping for Clean Edges
-
-When rotating maps, you can use the `clip` and `coord_crs` parameters to ensure clean, straight edges that match the rotated view:
-
-```{r clipping-example, fig.cap="Clean edges with clipping"}
-rot <- coord_rotate(nc, angle = 45, ratio = 16/9)
-
-ggplot() +
-  add_basemap(nc, 
-              bbox = rot$bbox,
-              clip = rot$clip_poly,      # Clip to rotated extent
-              coord_crs = rot$crs,        # Use rotated projection
-              zoom = 8) +
-  geom_sf(data = nc, fill = NA, color = "red", linewidth = 1) +
-  rot$coord +
-  ggtitle("Rotated map with clean clipped edges")
 ```
 
 ## Next Steps

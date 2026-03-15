@@ -20,10 +20,6 @@
 #' @param brightness Brightness multiplier (1 = no change, <1 = darker, >1 = brighter, default 1)
 #' @param contrast Contrast multiplier (1 = no change, <1 = less contrast, >1 = more contrast, default 1)
 #' @param gamma Gamma correction value (1 = no change, <1 = brighter midtones, >1 = darker midtones, default 1)
-#' @param clip Optional sf/sfc polygon to clip the basemap to. Useful when using rotation with coord_rotate().
-#'   Pass `rot$clip_poly` from coord_rotate() to clip the basemap to the rotated extent.
-#' @param coord_crs Optional CRS string for the output coordinate system. When using rotation,
-#'   pass `rot$crs` from coord_rotate() to ensure proper projection alignment.
 #' @param verbose Print debugging information (default FALSE)
 #'
 #' @return A ggplot2 layer (or list of layers) that can be added to a plot
@@ -85,8 +81,6 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
                          brightness = 1,
                          contrast = 1,
                          gamma = 1,
-                         clip = NULL,
-                         coord_crs = NULL,
                          verbose = FALSE) {
   
   # Determine bbox from inputs
@@ -143,30 +137,6 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
   # Fetch and create raster
   raster_obj <- fetch_and_create_raster(bbox_vec, zoom, url, verbose)
 
-  # Apply clipping if a clip polygon is provided
-  if (!is.null(clip)) {
-    if (verbose) message("Clipping raster using rotated projection...")
-    
-    # Get the target CRS for clipping
-    if (!is.null(coord_crs)) {
-      # Use the provided rotated CRS
-      clip_crs <- coord_crs
-      # Reproject raster to rotated CRS first
-      if (verbose) message("Reprojecting raster to rotated CRS...")
-      raster_obj <- terra::project(raster_obj, coord_crs)
-    } else {
-      # Use raster CRS (EPSG:3857)
-      clip_crs <- "EPSG:3857"
-    }
-    
-    # Transform clip polygon to the target CRS
-    clip_transformed <- sf::st_transform(clip, crs = clip_crs)
-    # Get bbox of clip polygon to ensure straight edges
-    clip_bbox <- sf::st_bbox(clip_transformed)
-    # Crop raster to bbox using terra::crop for straight edges
-    raster_obj <- terra::crop(raster_obj, terra::ext(clip_bbox))
-  }
-
   # Apply image transformations if requested
   if (grayscale || saturation != 1 || brightness != 1 || contrast != 1 || gamma != 1) {
     raster_obj <- apply_image_transforms(raster_obj, grayscale = grayscale, 
@@ -179,19 +149,9 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
                                 alpha = alpha,
                                 interpolate = interpolate)
 
-  # Create a bbox layer to drive map coordinates correctly
-  # This ensures ggplot knows the spatial extent even with rotations
-  if (!is.null(coord_crs)) {
-    # When rotating, use the rotated CRS for the bbox layer
-    bbox_sf <- sf::st_as_sf(sf::st_as_sfc(sf::st_bbox(bbox_vec, crs = 4326)))
-    bbox_sf <- sf::st_transform(bbox_sf, coord_crs)
-  } else {
-    bbox_sf <- sf::st_as_sf(sf::st_as_sfc(sf::st_bbox(bbox_vec, crs = 4326)))
-  }
-  bbox_layer <- ggspatial::layer_spatial(bbox_sf, fill = NA, color = NA)
 
   # Return both layers as a list for direct use in ggplot
-  list(bbox_layer, basemap_layer)
+  basemap_layer
 }
 
 #' Extract Bounding Box from sf Object
