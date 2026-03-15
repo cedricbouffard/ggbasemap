@@ -21,8 +21,6 @@ add_basemap(
   brightness = 1,
   contrast = 1,
   gamma = 1,
-  clip = NULL,
-  coord_crs = NULL,
   verbose = FALSE
 )
 }
@@ -58,12 +56,6 @@ add_basemap(
 \item{contrast}{Contrast multiplier (1 = no change, <1 = less contrast, >1 = more contrast, default 1)}
 
 \item{gamma}{Gamma correction value (1 = no change, <1 = brighter midtones, >1 = darker midtones, default 1)}
-
-\item{clip}{Optional sf/sfc polygon to clip the basemap to. Useful when using rotation with coord_rotate().
-Pass `rot$clip_poly` from coord_rotate() to clip the basemap to the rotated extent.}
-
-\item{coord_crs}{Optional CRS string for the output coordinate system. When using rotation,
-pass `rot$crs` from coord_rotate() to ensure proper projection alignment.}
 
 \item{verbose}{Print debugging information (default FALSE)}
 }
