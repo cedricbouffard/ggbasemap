@@ -97,8 +97,9 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
           stop("bbox must be in WGS84 (EPSG:4326). Use sf::st_bbox(st_transform(your_data, 4326))")
         }
       }
-      bbox_vec <- c(xmin = bbox["xmin"], ymin = bbox["ymin"], 
-                    xmax = bbox["xmax"], ymax = bbox["ymax"])
+      # Extract values as plain numeric, not bbox objects
+      bbox_vec <- c(xmin = as.numeric(bbox["xmin"]), ymin = as.numeric(bbox["ymin"]), 
+                    xmax = as.numeric(bbox["xmax"]), ymax = as.numeric(bbox["ymax"]))
     } else {
       # Vector form
       bbox_vec <- bbox
