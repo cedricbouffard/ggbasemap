@@ -157,12 +157,17 @@ add_basemap <- function(data = NULL, x = NULL, y = NULL, bbox = NULL, crs = 4326
   }
 
   # Use ggspatial's annotation_spatial for proper coordinate handling
-  layer <- ggspatial::annotation_spatial(raster_obj,
+  basemap_layer <- ggspatial::layer_spatial(raster_obj,
                                 alpha = alpha,
                                 interpolate = interpolate)
 
-  # Return just the layer for direct use in ggplot
-  layer
+  # Create a bbox layer to drive map coordinates correctly
+  # This ensures ggplot knows the spatial extent even with rotations
+  bbox_sf <- sf::st_as_sf(sf::st_as_sfc(sf::st_bbox(bbox_vec, crs = 4326)))
+  bbox_layer <- ggspatial::layer_spatial(bbox_sf, fill = NA, color = NA)
+
+  # Return both layers as a list for direct use in ggplot
+  list(bbox_layer, basemap_layer)
 }
 
 #' Extract Bounding Box from sf Object
